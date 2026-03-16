@@ -61,9 +61,16 @@ interface ToggleProps {
 }
 
 export const Toggle = ({ enabled, onChange, label, disabled }: ToggleProps) => (
-  <div className="flex items-center justify-between">
+  <div
+    className={
+      label
+        ? 'flex items-center justify-between w-full'
+        : 'inline-flex items-center'
+    }
+  >
     {label && <span className="text-sm text-gray-400">{label}</span>}
     <button
+      type="button"
       onClick={() => !disabled && onChange(!enabled)}
       disabled={disabled}
       className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${
@@ -71,8 +78,8 @@ export const Toggle = ({ enabled, onChange, label, disabled }: ToggleProps) => (
       } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
     >
       <motion.div
-        className="absolute top-1 w-4 h-4 bg-white rounded-full shadow-md"
-        animate={{ left: enabled ? '24px' : '4px' }}
+        className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-md"
+        animate={{ x: enabled ? 20 : 0 }}
         transition={{ type: 'spring', stiffness: 500, damping: 30 }}
       />
     </button>
@@ -245,7 +252,7 @@ interface ProgressBarProps {
   max: number;
   label?: string;
   showValue?: boolean;
-  color?: string;
+  color?: string; // Tailwind class (e.g. "bg-cyan-500") or CSS color (e.g. "#06b6d4")
   size?: 'sm' | 'md' | 'lg';
 }
 
@@ -257,8 +264,15 @@ export const ProgressBar = ({
   color = 'bg-cyan-500',
   size = 'md',
 }: ProgressBarProps) => {
-  const percentage = Math.min((value / max) * 100, 100);
+  const safeMax = max > 0 ? max : 0;
+  const percentage = safeMax > 0 ? Math.min((value / safeMax) * 100, 100) : 0;
   const heights = { sm: 'h-1', md: 'h-2', lg: 'h-3' };
+  const trimmedColor = color.trim();
+  const isCssColor =
+    trimmedColor.startsWith('#') ||
+    trimmedColor.startsWith('rgb(') ||
+    trimmedColor.startsWith('hsl(') ||
+    trimmedColor.startsWith('var(');
 
   return (
     <div className="space-y-1">
@@ -274,7 +288,8 @@ export const ProgressBar = ({
       )}
       <div className={`w-full bg-gray-800 rounded-full ${heights[size]} overflow-hidden`}>
         <motion.div
-          className={`h-full rounded-full ${color}`}
+          className={`h-full rounded-full ${isCssColor ? '' : color}`}
+          style={isCssColor ? { backgroundColor: color } : undefined}
           initial={{ width: 0 }}
           animate={{ width: `${percentage}%` }}
           transition={{ duration: 0.5, ease: 'easeOut' }}

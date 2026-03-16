@@ -12,7 +12,6 @@ import {
   IEQModule,
   SchedulingModule,
   FaultsModule,
-  SolarModule,
 } from './modules';
 
 const ModuleRenderer = () => {
@@ -26,7 +25,6 @@ const ModuleRenderer = () => {
     ieq: <IEQModule />,
     scheduling: <SchedulingModule />,
     faults: <FaultsModule />,
-    solar: <SolarModule />,
   };
 
   return modules[activeTab] || <OverviewModule />;
@@ -48,11 +46,11 @@ function App() {
 
       <Navigation />
 
-      <main className="p-6">
+      <main className="p-3 sm:p-6">
         <ModuleRenderer />
       </main>
 
-      <footer className="border-t border-gray-800 px-6 py-4 text-center text-xs text-gray-500">
+      <footer className="border-t border-gray-800 px-3 sm:px-6 py-4 text-center text-xs text-gray-500">
         <p>Building Automation System | Digital Twin Dashboard | Real-time Monitoring & Control</p>
       </footer>
     </div>

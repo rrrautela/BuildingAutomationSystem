@@ -1,4 +1,4 @@
-import { useBASStore } from '../store/basStore';
+﻿import { useBASStore } from '../store/basStore';
 import { Card, SectionHeader, MetricCard } from '../components/ui/Card';
 import { EnergyTimeSeriesChart } from '../components/ui/Charts';
 import { Button, Badge, ProgressBar } from '../components/ui/Controls';
@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 
 export const AnalyticsModule = () => {
-  const { optimizations, implementOptimization, weatherData, timeSeriesData, energyData } = useBASStore();
+  const { optimizations, implementOptimization, weatherData, timeSeriesData } = useBASStore();
 
   const totalSavings = optimizations.reduce((sum, o) => sum + o.estimatedSavings, 0);
   const implementedSavings = optimizations
@@ -275,3 +275,4 @@ export const AnalyticsModule = () => {
     </div>
   );
 };
+

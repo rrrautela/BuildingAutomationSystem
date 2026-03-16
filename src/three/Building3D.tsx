@@ -91,7 +91,7 @@ interface Building3DProps {
   viewMode: ViewMode;
   onZoneSelect: (zone: Zone) => void;
   solarOutput: number;
-  onModelNormalized?: (maxDim: number) => void;
+  onModelNormalized?: (info: { maxDim: number; height: number }) => void;
 }
 
 export const Building3D = ({
@@ -130,13 +130,13 @@ export const Building3D = ({
   useEffect(() => {
     clonedScene.updateWorldMatrix(true, true);
 
-    const box = new THREE.Box3().setFromObject(clonedScene);
-    if (box.isEmpty()) {
+    const allBox = new THREE.Box3().setFromObject(clonedScene);
+    if (allBox.isEmpty()) {
       return;
     }
 
-    const size = box.getSize(new THREE.Vector3());
-    const center = box.getCenter(new THREE.Vector3());
+    const size = allBox.getSize(new THREE.Vector3());
+    const center = allBox.getCenter(new THREE.Vector3());
     const initialMaxDim = Math.max(size.x, size.y, size.z);
     const targetSize = 80;
     const scale = targetSize / initialMaxDim;
@@ -148,47 +148,151 @@ export const Building3D = ({
     clonedScene.scale.setScalar(scale);
     clonedScene.updateWorldMatrix(true, true);
 
-    box.setFromObject(clonedScene);
-    const scaledSize = box.getSize(new THREE.Vector3());
-    box.getCenter(center);
+    allBox.setFromObject(clonedScene);
+    const scaledSize = allBox.getSize(new THREE.Vector3());
 
-    const offset = new THREE.Vector3(-center.x, -center.y, -center.z);
-    offset.y = -box.min.y;
+    // Some models include a large, thin basement/base slab that skews centering.
+    // Hide only the *largest* thin near-ground slab (by XZ area), then center using the main occupied floors.
+    const focusBox = new THREE.Box3();
+    const allHeight = Math.max(scaledSize.y, 1e-6);
+    // Base slab should be very thin relative to total model height.
+    const baseThicknessLimit = allHeight * 0.03;
+    const minY = allBox.min.y;
+    // Keep this tight so we don't accidentally classify the real Ground Floor as "base".
+    const nearGroundLimit = minY + allHeight * 0.06;
+
+    const meshEntries: Array<{
+      mesh: THREE.Mesh;
+      box: THREE.Box3;
+      size: THREE.Vector3;
+      areaXZ: number;
+      isCandidateBase: boolean;
+    }> = [];
+
+    clonedScene.traverse((child) => {
+      if (!(child instanceof THREE.Mesh)) return;
+      // Reset any previous visibility changes when re-normalizing.
+      child.visible = true;
+
+      const meshBox = new THREE.Box3().setFromObject(child);
+      if (meshBox.isEmpty()) return;
+
+      const meshSize = meshBox.getSize(new THREE.Vector3());
+      const areaXZ = meshSize.x * meshSize.z;
+      const isCandidateBase =
+        meshSize.y <= baseThicknessLimit &&
+        meshBox.min.y <= minY + allHeight * 0.02 &&
+        meshBox.max.y <= nearGroundLimit &&
+        areaXZ > 0;
+
+      meshEntries.push({ mesh: child, box: meshBox, size: meshSize, areaXZ, isCandidateBase });
+    });
+
+    // Determine the model "base" as the lowest vertical band (instead of heuristic slab detection).
+    // This prevents misclassifying the real Ground Floor as base.
+    let baseBandMaxY: number | null = null;
+
+    // Build vertical "bands" and compute a focus box from the top N major bands (Ground..Floor 5).
+    // We do not hide/reorder floors here; this is only for centering/grounding/camera framing.
+    const desiredBandCount = Math.max(zones.length, 1);
+    const bandTolerance = Math.max(allHeight / desiredBandCount / 2.2, 0.35);
+    const footprintArea = Math.max(scaledSize.x * scaledSize.z, 1e-6);
+    const bands: { centerY: number; minY: number; maxY: number; meshes: THREE.Mesh[]; areaXZ: number }[] = [];
+
+    meshEntries.forEach((entry) => {
+      if (!entry.mesh.visible) return;
+      const meshCenter = entry.box.getCenter(new THREE.Vector3());
+      const existing = bands.find((band) => Math.abs(band.centerY - meshCenter.y) <= bandTolerance);
+
+      if (existing) {
+        existing.meshes.push(entry.mesh);
+        existing.centerY = (existing.centerY * (existing.meshes.length - 1) + meshCenter.y) / existing.meshes.length;
+        existing.minY = Math.min(existing.minY, entry.box.min.y);
+        existing.maxY = Math.max(existing.maxY, entry.box.max.y);
+        existing.areaXZ += entry.size.x * entry.size.z;
+        return;
+      }
+
+      bands.push({
+        centerY: meshCenter.y,
+        minY: entry.box.min.y,
+        maxY: entry.box.max.y,
+        meshes: [entry.mesh],
+        areaXZ: entry.size.x * entry.size.z,
+      });
+    });
+
+    const sortedBands = bands.sort((a, b) => a.minY - b.minY);
+    const primaryBands = sortedBands.filter((band) => band.areaXZ / footprintArea >= 0.03);
+    const bandsToUse = primaryBands.length >= desiredBandCount ? primaryBands : sortedBands;
+
+    // Anchor at "Ground": select the first N floor bands above the base slab height (if detected).
+    if (bandsToUse.length > 0) {
+      baseBandMaxY = bandsToUse[0].maxY;
+    }
+
+    const groundAnchoredBands =
+      baseBandMaxY === null
+        ? bandsToUse
+        : bandsToUse.filter((band) => band.minY >= baseBandMaxY! - bandTolerance * 0.25);
+
+    // Map/focus the first N bands above base: Ground..Floor 5. Any extra above (e.g. roof) is ignored.
+    const keptBands = groundAnchoredBands.slice(0, desiredBandCount);
+
+    const keptMeshes = new Set<string>();
+    keptBands.forEach((band) => band.meshes.forEach((mesh) => keptMeshes.add(mesh.uuid)));
+
+    const weightedCenter = new THREE.Vector3(0, 0, 0);
+    let weightSum = 0;
+    const tmpCenter = new THREE.Vector3();
+
+    meshEntries.forEach((entry) => {
+      if (!entry.mesh.visible) return;
+      if (!keptMeshes.has(entry.mesh.uuid)) return;
+      focusBox.union(entry.box);
+
+      // Weight by footprint area so large slabs/floors dominate centering (better than pure bounds for asymmetric models).
+      const weight = Math.max(entry.size.x * entry.size.z, 1e-6);
+      entry.box.getCenter(tmpCenter);
+      weightedCenter.x += tmpCenter.x * weight;
+      weightedCenter.y += tmpCenter.y * weight;
+      weightedCenter.z += tmpCenter.z * weight;
+      weightSum += weight;
+    });
+
+    const centerBox = focusBox.isEmpty() ? allBox : focusBox;
+    centerBox.getCenter(center);
+    if (weightSum > 0) {
+      center.x = weightedCenter.x / weightSum;
+      center.z = weightedCenter.z / weightSum;
+    }
+
+    const offset = new THREE.Vector3(-center.x, 0, -center.z);
+    // Ground at the lowest point of the focused floors (so Ground sits on the grid even if basements exist).
+    offset.y = -(focusBox.isEmpty() ? allBox.min.y : focusBox.min.y);
 
     setCenterOffset(offset);
-    onModelNormalized?.(Math.max(scaledSize.x, scaledSize.y, scaledSize.z));
 
-    const existingBoxHelper = clonedScene.getObjectByName('__debug_box_helper__');
-    if (existingBoxHelper) {
-      clonedScene.remove(existingBoxHelper);
-    }
-
-    const existingAxesHelper = clonedScene.getObjectByName('__debug_axes_helper__');
-    if (existingAxesHelper) {
-      clonedScene.remove(existingAxesHelper);
-    }
-
-    const helper = new THREE.Box3Helper(box.clone(), 0xff0000);
-    helper.name = '__debug_box_helper__';
-    clonedScene.add(helper);
-
-    const axes = new THREE.AxesHelper(20);
-    axes.name = '__debug_axes_helper__';
-    clonedScene.add(axes);
+    const visibleSize = (focusBox.isEmpty() ? allBox : focusBox).getSize(new THREE.Vector3());
+    onModelNormalized?.({
+      maxDim: Math.max(visibleSize.x, visibleSize.y, visibleSize.z),
+      height: visibleSize.y,
+    });
 
     setNormalizationVersion((value) => value + 1);
-  }, [clonedScene, onModelNormalized]);
+  }, [clonedScene, onModelNormalized, zones.length]);
 
   const meshZoneLookup = useMemo(() => {
     const directMatches = new Map<string, Zone>();
     const claimedZones = new Set<string>();
-    const unmatchedMeshes: { mesh: THREE.Mesh; centerY: number }[] = [];
+    const unmatchedMeshes: { mesh: THREE.Mesh; centerY: number; minY: number; maxY: number; areaXZ: number }[] = [];
     const modelBounds = new THREE.Box3().setFromObject(clonedScene);
     const modelHeight = Math.max(modelBounds.getSize(new THREE.Vector3()).y, 1);
     const bandTolerance = Math.max(modelHeight / Math.max(zones.length, 1) / 2.5, 0.3);
-
+    const footprintArea = Math.max(modelBounds.getSize(new THREE.Vector3()).x * modelBounds.getSize(new THREE.Vector3()).z, 1e-6);
     clonedScene.traverse((child) => {
       if (!(child instanceof THREE.Mesh)) return;
+      if (!child.visible) return;
 
       const normalizedName = normalizeName(child.name);
       const matchedZone = zoneLookup.get(normalizedName);
@@ -201,14 +305,21 @@ export const Building3D = ({
 
       const meshBox = new THREE.Box3().setFromObject(child);
       const meshCenter = meshBox.getCenter(new THREE.Vector3());
-      unmatchedMeshes.push({ mesh: child, centerY: meshCenter.y });
+      const meshSize = meshBox.getSize(new THREE.Vector3());
+      unmatchedMeshes.push({
+        mesh: child,
+        centerY: meshCenter.y,
+        minY: meshBox.min.y,
+        maxY: meshBox.max.y,
+        areaXZ: meshSize.x * meshSize.z,
+      });
     });
 
     const remainingZones = [...zones]
       .filter((zone) => !claimedZones.has(zone.id))
-      .sort((a, b) => b.floor - a.floor);
-    const sortedUnmatchedMeshes = unmatchedMeshes.sort((a, b) => b.centerY - a.centerY);
-    const floorBands: { centerY: number; meshes: THREE.Mesh[] }[] = [];
+      .sort((a, b) => a.floor - b.floor);
+    const sortedUnmatchedMeshes = unmatchedMeshes.sort((a, b) => a.centerY - b.centerY);
+    const floorBands: { centerY: number; minY: number; maxY: number; meshes: THREE.Mesh[]; areaXZ: number }[] = [];
 
     sortedUnmatchedMeshes.forEach((entry) => {
       const existingBand = floorBands.find((band) => Math.abs(band.centerY - entry.centerY) <= bandTolerance);
@@ -218,13 +329,38 @@ export const Building3D = ({
         existingBand.centerY =
           (existingBand.centerY * (existingBand.meshes.length - 1) + entry.centerY) /
           existingBand.meshes.length;
+        existingBand.minY = Math.min(existingBand.minY, entry.minY);
+        existingBand.maxY = Math.max(existingBand.maxY, entry.maxY);
+        existingBand.areaXZ += entry.areaXZ;
         return;
       }
 
-      floorBands.push({ centerY: entry.centerY, meshes: [entry.mesh] });
+      floorBands.push({
+        centerY: entry.centerY,
+        minY: entry.minY,
+        maxY: entry.maxY,
+        meshes: [entry.mesh],
+        areaXZ: entry.areaXZ,
+      });
     });
 
-    floorBands.forEach((band, index) => {
+    // Map lowest geometry band -> lowest zone.floor (Ground), then upward.
+    const sortedBands = floorBands.sort((a, b) => a.minY - b.minY);
+    const primaryBands = sortedBands.filter((band) => band.areaXZ / footprintArea >= 0.03);
+    const bandsToUse = primaryBands.length >= remainingZones.length ? primaryBands : sortedBands;
+
+    // Anchor at the lowest band (base), then map the next N bands to Ground..Floor 5.
+    // This avoids skipping the real Ground floor even when it's a large thin slab.
+    const baseBandMaxY = bandsToUse.length > 0 ? bandsToUse[0].maxY : null;
+    const groundAnchoredBands =
+      baseBandMaxY === null
+        ? bandsToUse
+        : bandsToUse.filter((band) => band.minY >= baseBandMaxY - bandTolerance * 0.25);
+
+    // Order by band centerY (not minY) to avoid swapping adjacent floors due to stairs/overhangs.
+    const keptBands = [...groundAnchoredBands].sort((a, b) => a.centerY - b.centerY).slice(0, remainingZones.length);
+
+    keptBands.forEach((band, index) => {
       const fallbackZone = remainingZones[index];
       if (!fallbackZone) return;
 

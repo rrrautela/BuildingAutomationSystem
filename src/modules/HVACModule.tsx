@@ -69,7 +69,7 @@ export const HVACModule = () => {
               <GaugeChart
                 value={selectedZone.temp}
                 max={35}
-                label="C"
+                label={'\u00B0C'}
                 thresholds={{ warning: selectedZone.targetTemp + 1, critical: selectedZone.targetTemp + 2 }}
               />
               <span className="text-sm text-gray-400 mt-2">Current Temp</span>
@@ -114,10 +114,60 @@ export const HVACModule = () => {
                 min={26}
                 max={30}
                 step={0.5}
-                unit="C"
+                unit={'\u00B0C'}
                 onChange={(temp) => updateZone(selectedZone.id, { targetTemp: temp })}
               />
               <p className="text-xs text-gray-400">Cooling range: 26-30C (Weekday Normal)</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 bg-gray-800/50 rounded-lg space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-white font-medium">Manual Fan Speed</p>
+                  <Badge variant={operatingMode === 'manual' ? 'info' : 'default'}>
+                    {operatingMode === 'manual' ? 'Manual' : 'Auto'}
+                  </Badge>
+                </div>
+                <Slider
+                  label="Fan Speed"
+                  value={selectedZone.fanSpeed}
+                  min={0}
+                  max={100}
+                  step={1}
+                  unit="%"
+                  disabled={operatingMode !== 'manual' || !selectedZone.hvacEnabled}
+                  onChange={(fanSpeed) => updateZone(selectedZone.id, { fanSpeed })}
+                />
+                <p className="text-xs text-gray-400">
+                  {operatingMode === 'manual'
+                    ? 'Fan speed is held to your setting.'
+                    : 'Switch to Manual to override fan speed.'}
+                </p>
+              </div>
+
+              <div className="p-4 bg-gray-800/50 rounded-lg space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-white font-medium">Manual Ventilation</p>
+                  <Badge variant={operatingMode === 'manual' ? 'info' : 'default'}>
+                    {operatingMode === 'manual' ? 'Manual' : 'Auto'}
+                  </Badge>
+                </div>
+                <Slider
+                  label="Ventilation Rate"
+                  value={selectedZone.ventilationRate}
+                  min={0}
+                  max={100}
+                  step={1}
+                  unit="%"
+                  disabled={operatingMode !== 'manual' || !selectedZone.hvacEnabled}
+                  onChange={(ventilationRate) => updateZone(selectedZone.id, { ventilationRate })}
+                />
+                <p className="text-xs text-gray-400">
+                  {operatingMode === 'manual'
+                    ? 'Ventilation is held to your setting.'
+                    : 'Switch to Manual to override ventilation.'}
+                </p>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -134,27 +184,27 @@ export const HVACModule = () => {
               </div>
 
               <div className="flex items-center justify-between p-4 bg-gray-800/50 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${hvacStatusConfig[selectedZone.hvacStatus].bg}`}>
-                    <StatusIcon className={`w-5 h-5 ${hvacStatusConfig[selectedZone.hvacStatus].color}`} />
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-lg ${hvacStatusConfig[selectedZone.hvacStatus].bg}`}>
+                      <StatusIcon className={`w-5 h-5 ${hvacStatusConfig[selectedZone.hvacStatus].color}`} />
+                    </div>
+                    <div>
+                      <p className="text-white font-medium capitalize">{selectedZone.hvacStatus}</p>
+                      <p className="text-sm text-gray-400">Current HVAC Status</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-white font-medium capitalize">{selectedZone.hvacStatus}</p>
-                    <p className="text-sm text-gray-400">Current HVAC Status</p>
-                  </div>
+                  <Badge variant={selectedZone.hvacStatus === 'off' ? 'danger' : 'info'}>
+                    {selectedZone.hvacStatus === 'off' ? 'OFF' : 'ON'}
+                  </Badge>
                 </div>
-                <Badge variant={selectedZone.hvacEnabled ? 'info' : 'danger'}>
-                  {selectedZone.hvacEnabled ? 'ON' : 'OFF'}
-                </Badge>
               </div>
             </div>
-          </div>
-        </Card>
+          </Card>
 
         <Card>
           <SectionHeader title="Comfort Analysis" />
           <div className="space-y-6">
-            <ComfortBand value={selectedZone.temp} min={15} max={30} optimalMin={26} optimalMax={30} label="Temperature" unit="C" />
+            <ComfortBand value={selectedZone.temp} min={15} max={30} optimalMin={26} optimalMax={30} label="Temperature" unit={'\u00B0C'} />
             <ComfortBand value={selectedZone.humidity} min={20} max={80} optimalMin={40} optimalMax={60} label="Humidity" unit="%" />
             <ComfortBand value={selectedZone.co2} min={400} max={1000} optimalMin={400} optimalMax={1000} label="CO2 Level" unit="ppm" />
           </div>
@@ -218,10 +268,10 @@ export const HVACModule = () => {
                           : 'text-green-400'
                       }
                     >
-                      {zone.temp.toFixed(1)}C
+                      {zone.temp.toFixed(1)}{'\u00B0C'}
                     </span>
                   </td>
-                  <td className="py-3 text-gray-300">{zone.targetTemp}C</td>
+                  <td className="py-3 text-gray-300">{zone.targetTemp}{'\u00B0C'}</td>
                   <td className="py-3 text-gray-300">{zone.humidity.toFixed(0)}%</td>
                   <td className="py-3">
                     <Badge variant={zone.mode === 'auto' ? 'info' : zone.mode === 'manual' ? 'default' : 'warning'}>

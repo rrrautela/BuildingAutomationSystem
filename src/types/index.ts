@@ -164,6 +164,7 @@ export interface BASState {
   acknowledgeFault: (faultId: string) => void;
   resolveFault: (faultId: string) => void;
   addAlert: (alert: Omit<Alert, 'id' | 'timestamp'>) => void;
+  addSchedule: () => void;
   toggleSchedule: (scheduleId: string) => void;
   toggleLightingSchedule: (scheduleId: string) => void;
   setAfterHoursDuration: (duration: string) => void;

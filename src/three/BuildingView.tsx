@@ -2,19 +2,21 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { Scene } from './Scene';
 import { useBASStore } from '../store/basStore';
+import { useState } from 'react';
 
 export const BuildingView = () => {
   const { zones, selectedZoneId, setSelectedZone, viewMode, setViewMode, setShow3D, setActiveTab } = useBASStore();
   const selectedZone = zones.find((z) => z.id === selectedZoneId);
+  const [legendOpen, setLegendOpen] = useState(false);
 
   const viewModes = ['hvac', 'lighting', 'occupancy', 'energy'] as const;
 
   const legendItems = {
     hvac: [
-      { color: '#ef4444', label: 'Too Hot (>1.5°C above)' },
+      { color: '#ef4444', label: 'Too Hot (>1.5\u00B0C above)' },
       { color: '#eab308', label: 'Slight Deviation' },
       { color: '#22c55e', label: 'Normal' },
-      { color: '#3b82f6', label: 'Too Cold (<1.5°C below)' },
+      { color: '#3b82f6', label: 'Too Cold (<1.5\u00B0C below)' },
     ],
     lighting: [
       { color: '#fff7d6', label: 'Bright (100%)', glow: true },
@@ -41,25 +43,17 @@ export const BuildingView = () => {
       transition={{ duration: 0.3 }}
       className="border-b border-gray-800"
     >
-      <div
-        style={{
-          width: '100%',
-          height: '420px',
-          position: 'relative',
-          overflow: 'hidden',
-          background: 'transparent',
-        }}
-      >
+      <div className="relative w-full h-[52vh] sm:h-[420px] overflow-hidden bg-transparent">
         <Scene />
 
-        <div className="absolute top-4 left-4 flex gap-2 z-10">
+        <div className="absolute top-3 sm:top-4 left-3 sm:left-4 right-3 sm:right-auto flex gap-2 z-10 overflow-x-auto scrollbar-thin">
           {viewModes.map((mode) => (
             <motion.button
               key={mode}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => setViewMode(mode)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
                 viewMode === mode
                   ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-500/25'
                   : 'bg-gray-900/90 text-gray-300 hover:bg-gray-800/90 backdrop-blur-sm'
@@ -70,19 +64,35 @@ export const BuildingView = () => {
           ))}
         </div>
 
-        <div className="absolute bottom-4 left-4 bg-gray-900/95 backdrop-blur-sm border border-gray-800 rounded-lg p-4 z-10">
-          <div className="text-sm font-semibold text-white mb-3">Legend - {viewMode.toUpperCase()}</div>
-          <div className="space-y-2">
+        <div className="absolute bottom-3 left-3 z-20 sm:hidden">
+          <button
+            type="button"
+            onClick={() => setLegendOpen((v) => !v)}
+            className="px-3 py-1.5 rounded-lg text-[11px] font-medium bg-gray-900/90 text-gray-200 border border-gray-800 backdrop-blur-sm"
+          >
+            {legendOpen ? 'Hide Legend' : `Legend (${viewMode.toUpperCase()})`}
+          </button>
+        </div>
+
+        <div
+          className={`absolute bottom-12 sm:bottom-4 left-3 sm:left-4 bg-gray-900/95 backdrop-blur-sm border border-gray-800 rounded-lg p-2.5 sm:p-4 z-10 max-w-[calc(100vw-1.5rem)] sm:max-w-xs ${
+            legendOpen ? 'block' : 'hidden'
+          } sm:block`}
+        >
+          <div className="text-[11px] sm:text-sm font-semibold text-white mb-1.5 sm:mb-3">
+            Legend - {viewMode.toUpperCase()}
+          </div>
+          <div className="space-y-1.5 sm:space-y-2 max-h-24 overflow-auto scrollbar-thin pr-1">
             {legendItems[viewMode].map((item, index) => (
               <div key={index} className="flex items-center gap-3">
                 <div
-                  className="w-4 h-4 rounded"
+                  className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded"
                   style={{
                     backgroundColor: item.color,
                     boxShadow: 'glow' in item && item.glow ? `0 0 10px ${item.color}` : 'none',
                   }}
                 />
-                <span className="text-xs text-gray-400">{item.label}</span>
+                <span className="text-[11px] sm:text-xs text-gray-400">{item.label}</span>
               </div>
             ))}
           </div>
@@ -94,7 +104,7 @@ export const BuildingView = () => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
-              className="absolute top-4 right-4 bg-gray-900/95 backdrop-blur-sm border border-gray-800 rounded-xl p-5 w-80 z-10 shadow-2xl"
+              className="absolute top-3 sm:top-4 left-3 right-3 sm:left-auto sm:right-4 bg-gray-900/95 backdrop-blur-sm border border-gray-800 rounded-xl p-4 sm:p-5 sm:w-80 z-10 shadow-2xl"
             >
               <div className="flex items-start justify-between mb-4">
                 <div>
@@ -130,26 +140,34 @@ export const BuildingView = () => {
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div className="p-3 bg-gray-800/60 rounded-lg">
                   <div className="text-gray-400 text-xs mb-1">Temperature</div>
-                  <div className={`font-semibold ${
-                    Math.abs(selectedZone.temp - selectedZone.targetTemp) > 1.5
-                      ? 'text-red-400'
-                      : Math.abs(selectedZone.temp - selectedZone.targetTemp) > 0.5
-                      ? 'text-yellow-400'
-                      : 'text-green-400'
-                  }`}>
-                    {selectedZone.temp.toFixed(1)}°C
+                  <div
+                    className={`font-semibold ${
+                      Math.abs(selectedZone.temp - selectedZone.targetTemp) > 1.5
+                        ? 'text-red-400'
+                        : Math.abs(selectedZone.temp - selectedZone.targetTemp) > 0.5
+                          ? 'text-yellow-400'
+                          : 'text-green-400'
+                    }`}
+                  >
+                    {selectedZone.temp.toFixed(1)}
+                    {'\u00B0C'}
                   </div>
                 </div>
                 <div className="p-3 bg-gray-800/60 rounded-lg">
                   <div className="text-gray-400 text-xs mb-1">Target</div>
-                  <div className="font-semibold text-white">{selectedZone.targetTemp}°C</div>
+                  <div className="font-semibold text-white">
+                    {selectedZone.targetTemp}
+                    {'\u00B0C'}
+                  </div>
                 </div>
                 <div className="p-3 bg-gray-800/60 rounded-lg">
                   <div className="text-gray-400 text-xs mb-1">Humidity</div>
                   <div className="font-semibold text-white">{selectedZone.humidity.toFixed(0)}%</div>
                 </div>
                 <div className="p-3 bg-gray-800/60 rounded-lg">
-                  <div className="text-gray-400 text-xs mb-1">CO₂</div>
+                  <div className="text-gray-400 text-xs mb-1">
+                    CO{'\u2082'}
+                  </div>
                   <div className={`font-semibold ${selectedZone.co2 > 700 ? 'text-red-400' : 'text-white'}`}>
                     {selectedZone.co2} ppm
                   </div>
@@ -177,8 +195,8 @@ export const BuildingView = () => {
           )}
         </AnimatePresence>
 
-        <div className="absolute bottom-4 right-4 text-xs text-gray-500 bg-gray-900/80 px-3 py-1.5 rounded backdrop-blur-sm z-10">
-          Click a floor to select • Scroll to zoom • Drag to rotate
+        <div className="absolute bottom-3 sm:bottom-4 right-3 sm:right-4 text-[11px] sm:text-xs text-gray-500 bg-gray-900/80 px-3 py-1.5 rounded backdrop-blur-sm z-10 max-w-[70vw] sm:max-w-none">
+          Tap a floor {'\u2022'} Pinch to zoom {'\u2022'} Drag to rotate
         </div>
       </div>
     </motion.div>

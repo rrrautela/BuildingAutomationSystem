@@ -76,22 +76,6 @@ const calculateLightingTarget = (
   return clamp(roundToStep(scheduledLevel - daylightReduction, 5), 0, 100);
 };
 
-const calculateZoneEnergy = (zone: Zone) => {
-  const hvacLoad =
-    !zone.hvacEnabled || zone.hvacStatus === 'off'
-      ? 0
-      : zone.hvacStatus === 'cooling' || zone.hvacStatus === 'heating'
-      ? 16 + zone.fanSpeed * 0.14
-      : zone.hvacStatus === 'ventilating'
-      ? 8 + zone.ventilationRate * 0.06
-      : 4 + zone.fanSpeed * 0.04;
-
-  const lightingLoad = zone.lightingEnabled ? zone.lighting * 0.11 : 0;
-  const plugLoad = zone.occupied ? 4 + zone.occupantCount * 0.32 : 1.5;
-
-  return { hvacLoad, lightingLoad, plugLoad };
-};
-
 const createSeriesPoint = (
   date: Date,
   hvac: number,
@@ -115,27 +99,161 @@ const createSeriesPoint = (
 };
 
 const generateInitialZones = (): Zone[] => [
-  { id: 'z0', name: 'Experience Center', floor: 0, temp: 22.8, humidity: 46, targetTemp: 26, mode: 'auto', occupied: true, occupantCount: 10, co2: 410, co: 2, pm25: 14, voc: 110, lighting: 80, configuredLighting: 80, lightingEnabled: true, autoDimmingEnabled: true, daylightContribution: 40, hvacEnabled: true, hvacStatus: 'cooling', fanSpeed: 58, ventilationRate: 84, hasFault: false },
-  { id: 'z1', name: 'Recreational Office', floor: 1, temp: 24.1, humidity: 49, targetTemp: 26, mode: 'auto', occupied: true, occupantCount: 30, co2: 560, co: 2, pm25: 21, voc: 170, lighting: 85, configuredLighting: 85, lightingEnabled: true, autoDimmingEnabled: true, daylightContribution: 38, hvacEnabled: true, hvacStatus: 'cooling', fanSpeed: 68, ventilationRate: 89, hasFault: false },
-  { id: 'z2', name: 'Platinum', floor: 2, temp: 23.4, humidity: 44, targetTemp: 26, mode: 'auto', occupied: true, occupantCount: 45, co2: 610, co: 2, pm25: 18, voc: 145, lighting: 80, configuredLighting: 80, lightingEnabled: true, autoDimmingEnabled: true, daylightContribution: 42, hvacEnabled: true, hvacStatus: 'cooling', fanSpeed: 72, ventilationRate: 91, hasFault: false },
-  { id: 'z3', name: 'Grotto', floor: 3, temp: 22.6, humidity: 43, targetTemp: 26, mode: 'manual', occupied: true, occupantCount: 40, co2: 530, co: 2, pm25: 11, voc: 105, lighting: 70, configuredLighting: 70, lightingEnabled: true, autoDimmingEnabled: false, daylightContribution: 55, hvacEnabled: true, hvacStatus: 'idle', fanSpeed: 26, ventilationRate: 60, hasFault: false },
-  { id: 'z4', name: 'Rental Office', floor: 4, temp: 25.3, humidity: 50, targetTemp: 26, mode: 'auto', occupied: true, occupantCount: 35, co2: 720, co: 2, pm25: 28, voc: 220, lighting: 95, configuredLighting: 95, lightingEnabled: true, autoDimmingEnabled: true, daylightContribution: 20, hvacEnabled: true, hvacStatus: 'cooling', fanSpeed: 85, ventilationRate: 95, hasFault: true, faultMessage: 'High CO2 levels detected' },
-  { id: 'z5', name: 'Rental Office', floor: 5, temp: 21.9, humidity: 41, targetTemp: 26, mode: 'manual', occupied: true, occupantCount: 30, co2: 470, co: 2, pm25: 13, voc: 155, lighting: 90, configuredLighting: 90, lightingEnabled: true, autoDimmingEnabled: false, daylightContribution: 24, hvacEnabled: true, hvacStatus: 'cooling', fanSpeed: 74, ventilationRate: 98, hasFault: false },
-  { id: 'z6', name: 'Basement 1', floor: -1, temp: 23.0, humidity: 48, targetTemp: 26, mode: 'auto', occupied: false, occupantCount: 0, co2: 420, co: 2, pm25: 12, voc: 120, lighting: 25, configuredLighting: 25, lightingEnabled: true, autoDimmingEnabled: true, daylightContribution: 40, hvacEnabled: true, hvacStatus: 'ventilating', fanSpeed: 40, ventilationRate: 75, hasFault: false },
-  { id: 'z7', name: 'Basement 2', floor: -2, temp: 22.5, humidity: 50, targetTemp: 26, mode: 'auto', occupied: false, occupantCount: 0, co2: 430, co: 2, pm25: 13, voc: 125, lighting: 25, configuredLighting: 25, lightingEnabled: true, autoDimmingEnabled: true, daylightContribution: 40, hvacEnabled: true, hvacStatus: 'ventilating', fanSpeed: 42, ventilationRate: 78, hasFault: false },
+  {
+    id: 'z0',
+    name: 'Experience Center',
+    floor: 0,
+    temp: 25.2,
+    humidity: 48,
+    targetTemp: 26,
+    mode: 'auto',
+    occupied: true,
+    occupantCount: 12,
+    co2: 460,
+    co: 1.6,
+    pm25: 12,
+    voc: 120,
+    lighting: 78,
+    configuredLighting: 78,
+    lightingEnabled: true,
+    autoDimmingEnabled: true,
+    daylightContribution: 42,
+    hvacEnabled: true,
+    hvacStatus: 'cooling',
+    fanSpeed: 55,
+    ventilationRate: 82,
+    hasFault: false,
+  },
+  {
+    id: 'z1',
+    name: 'Recreational Office',
+    floor: 1,
+    temp: 25.6,
+    humidity: 49,
+    targetTemp: 26,
+    mode: 'auto',
+    occupied: true,
+    occupantCount: 28,
+    co2: 540,
+    co: 1.8,
+    pm25: 15,
+    voc: 145,
+    lighting: 82,
+    configuredLighting: 82,
+    lightingEnabled: true,
+    autoDimmingEnabled: true,
+    daylightContribution: 40,
+    hvacEnabled: true,
+    hvacStatus: 'cooling',
+    fanSpeed: 62,
+    ventilationRate: 88,
+    hasFault: false,
+  },
+  {
+    id: 'z2',
+    name: 'Platinum',
+    floor: 2,
+    temp: 25.3,
+    humidity: 47,
+    targetTemp: 26,
+    mode: 'auto',
+    occupied: true,
+    occupantCount: 42,
+    co2: 590,
+    co: 1.7,
+    pm25: 13,
+    voc: 135,
+    lighting: 80,
+    configuredLighting: 80,
+    lightingEnabled: true,
+    autoDimmingEnabled: true,
+    daylightContribution: 44,
+    hvacEnabled: true,
+    hvacStatus: 'idle',
+    fanSpeed: 34,
+    ventilationRate: 70,
+    hasFault: false,
+  },
+  {
+    id: 'z3',
+    name: 'Grotto',
+    floor: 3,
+    temp: 25.0,
+    humidity: 46,
+    targetTemp: 26,
+    mode: 'manual',
+    occupied: true,
+    occupantCount: 38,
+    co2: 520,
+    co: 1.5,
+    pm25: 10,
+    voc: 110,
+    lighting: 72,
+    configuredLighting: 72,
+    lightingEnabled: true,
+    autoDimmingEnabled: false,
+    daylightContribution: 52,
+    hvacEnabled: true,
+    hvacStatus: 'idle',
+    fanSpeed: 28,
+    ventilationRate: 64,
+    hasFault: false,
+  },
+  {
+    id: 'z4',
+    name: 'Rental Office',
+    floor: 4,
+    temp: 25.7,
+    humidity: 50,
+    targetTemp: 26,
+    mode: 'auto',
+    occupied: true,
+    occupantCount: 34,
+    co2: 610,
+    co: 1.9,
+    pm25: 16,
+    voc: 160,
+    lighting: 86,
+    configuredLighting: 86,
+    lightingEnabled: true,
+    autoDimmingEnabled: true,
+    daylightContribution: 36,
+    hvacEnabled: true,
+    hvacStatus: 'cooling',
+    fanSpeed: 58,
+    ventilationRate: 86,
+    hasFault: false,
+  },
+  {
+    id: 'z5',
+    name: 'Rental Office',
+    floor: 5,
+    temp: 25.4,
+    humidity: 47,
+    targetTemp: 26,
+    mode: 'manual',
+    occupied: true,
+    occupantCount: 30,
+    co2: 560,
+    co: 1.6,
+    pm25: 11,
+    voc: 125,
+    lighting: 76,
+    configuredLighting: 76,
+    lightingEnabled: true,
+    autoDimmingEnabled: false,
+    daylightContribution: 46,
+    hvacEnabled: true,
+    hvacStatus: 'idle',
+    fanSpeed: 30,
+    ventilationRate: 66,
+    hasFault: false,
+  },
 ];
 
-const generateInitialAlerts = (): Alert[] => [
-  { id: 'a1', type: 'critical', title: 'High CO2 in Rental Office', message: 'CO2 levels at 720 ppm - exceeds threshold of 700 ppm', time: '2 min ago', timestamp: Date.now() - 120000, dismissed: false, zoneId: 'z4', category: 'ieq' },
-  { id: 'a2', type: 'warning', title: 'HVAC Inefficiency Detected', message: 'Floor 4 temperature 2.3 C above setpoint', time: '15 min ago', timestamp: Date.now() - 900000, dismissed: false, zoneId: 'z4', category: 'hvac' },
-  { id: 'a3', type: 'info', title: 'Peak Load Period Approaching', message: 'Expected peak demand at 2:00 PM - consider load shedding', time: '1 hour ago', timestamp: Date.now() - 3600000, dismissed: false, category: 'energy' },
-];
+const generateInitialAlerts = (): Alert[] => [];
 
-const generateInitialFaults = (): Fault[] => [
-  { id: 'f1', severity: 'high', type: 'Sensor Drift', description: 'Temperature sensor reading inconsistent with ambient conditions', location: 'Rental Office', detectedAt: '2 hours ago', estimatedSavings: 120, acknowledged: false, resolved: false },
-  { id: 'f2', severity: 'medium', type: 'Stuck Damper', description: 'VAV damper not responding to control signals', location: 'Platinum', detectedAt: '4 hours ago', estimatedSavings: 85, acknowledged: true, resolved: false },
-  { id: 'f3', severity: 'low', type: 'Filter Maintenance', description: 'AHU filter differential pressure elevated', location: 'Main AHU', detectedAt: '1 day ago', estimatedSavings: 45, acknowledged: true, resolved: false },
-];
+const generateInitialFaults = (): Fault[] => [];
 
 const generateTimeSeriesData = (): TimeSeriesPoint[] => {
   const data: TimeSeriesPoint[] = [];
@@ -144,11 +262,26 @@ const generateTimeSeriesData = (): TimeSeriesPoint[] => {
   for (let i = 23; i >= 0; i--) {
     const time = new Date(now.getTime() - i * 60 * 60 * 1000);
     const hour = time.getHours();
-    const workHourFactor = hour >= 9 && hour <= 18 ? 1 : 0.6;
-    const solar = hour >= 6 && hour <= 18 ? 8 + 32 * getDaylightFactor(hour) : 0;
-    const hvac = 96 + workHourFactor * 38 + Math.sin(hour / 24 * Math.PI * 2) * 10;
-    const lighting = 42 + workHourFactor * 18;
-    const plugLoads = 32 + workHourFactor * 16;
+    const solar = 0;
+
+    // "Presentation friendly" profile:
+    // - ramp-up after 7-8 AM
+    // - gradual dip after 3 PM as office starts to vacate
+    // - low/steady overnight (e.g. 3 AM)
+    // Office empty overnight: low load from ~8 PM to ~8 AM.
+    // Ramp-up starts at 8 AM; vacating starts at 4 PM.
+    let occFactor = 0.18;
+    if (hour >= 0 && hour < 2) occFactor = 0.2; // 12 AM - 2 AM: low
+    else if (hour >= 2 && hour < 8) occFactor = 0.15; // 2 AM - 8 AM: lowest
+    else if (hour >= 8 && hour < 9) occFactor = 0.35 + (hour - 8) * 0.25; // 8 AM - 9 AM: ramp
+    else if (hour >= 9 && hour < 16) occFactor = 1.0; // 9 AM - 4 PM: peak occupancy
+    else if (hour >= 16 && hour < 20) occFactor = 1.0 - ((hour - 16) / 4) * 0.7; // 4 PM - 8 PM: ramp down to 0.3
+    else if (hour >= 20) occFactor = 0.2; // 8 PM onwards: low
+
+    const swing = Math.sin((hour / 24) * Math.PI * 2);
+    const hvac = 50 + occFactor * 60 + swing * 4;
+    const lighting = 10 + occFactor * 40;
+    const plugLoads = 20 + occFactor * 25 + Math.cos((hour / 24) * Math.PI * 2) * 1.5;
     const other = 15;
 
     data.push(createSeriesPoint(time, hvac, lighting, plugLoads, other, solar));
@@ -158,9 +291,10 @@ const generateTimeSeriesData = (): TimeSeriesPoint[] => {
 };
 
 const generateSchedules = (): Schedule[] => [
-  { id: 's1', name: 'Weekday Normal', startTime: '09:00', endTime: '18:00', days: [1, 2, 3, 4, 5], mode: 'auto', targetTemp: 30, active: true },
-  { id: 's2', name: 'Night Setback', startTime: '22:00', endTime: '06:00', days: [1, 2, 3, 4, 5], mode: 'night-setback', targetTemp: 0, active: true },
-  { id: 's3', name: 'Weekend', startTime: '00:00', endTime: '23:59', days: [0, 6], mode: 'night-setback', targetTemp: 0, active: true },
+  { id: 's1', name: 'Weekday Normal', startTime: '09:00', endTime: '18:00', days: [1, 2, 3, 4, 5], mode: 'auto', targetTemp: 26, active: true },
+  // Presentation default: keep the building comfortable overnight (avoid red cards at 3 AM).
+  { id: 's2', name: 'Night Setback', startTime: '22:00', endTime: '06:00', days: [1, 2, 3, 4, 5], mode: 'night-setback', targetTemp: 0, active: false },
+  { id: 's3', name: 'Weekend', startTime: '00:00', endTime: '23:59', days: [0, 6], mode: 'night-setback', targetTemp: 0, active: false },
 ];
 
 const generateLightingSchedules = (): LightingSchedule[] => [
@@ -176,17 +310,18 @@ const generateOptimizations = (): OptimizationSuggestion[] => [
 ];
 
 const initialEnergyData: EnergyData = {
-  current: 245,
-  baseline: 280,
-  hvac: 120,
-  lighting: 65,
-  plugLoads: 45,
+  // Exact values requested for the dashboard defaults.
+  current: 240,
+  baseline: 400,
+  hvac: 110,
+  lighting: 60,
+  plugLoads: 55,
   other: 15,
-  solar: 38,
-  grid: 207,
-  peakDemand: 310,
-  epi: 87.5,
-  selfConsumption: 82,
+  solar: 0,
+  grid: 240,
+  peakDemand: 323,
+  epi: 54,
+  selfConsumption: 0,
 };
 
 const initialWaterData: WaterData = {
@@ -334,6 +469,24 @@ export const useBASStore = create<BASState>((set, get) => ({
       ],
     })),
 
+  addSchedule: () =>
+    set((state) => {
+      const id = `s${Date.now()}`;
+      const nextIndex = state.schedules.length + 1;
+      const schedule: Schedule = {
+        id,
+        name: `Custom Schedule ${nextIndex}`,
+        startTime: '09:00',
+        endTime: '18:00',
+        days: [1, 2, 3, 4, 5],
+        mode: 'auto',
+        targetTemp: 26,
+        active: true,
+      };
+
+      return { schedules: [schedule, ...state.schedules] };
+    }),
+
   toggleSchedule: (scheduleId) =>
     set((state) => ({
       schedules: state.schedules.map((schedule) =>
@@ -432,9 +585,12 @@ export const useBASStore = create<BASState>((set, get) => ({
 
       const absoluteTempDifference = Math.abs(zone.temp - tempTarget);
       const co2Excess = Math.max(0, zone.co2 - 450);
+      const isManual = zone.mode === 'manual';
       const targetFanSpeed =
         !effectiveHVACEnabled
           ? 0
+          : isManual
+          ? zone.fanSpeed
           : hvacStatus === 'cooling' || hvacStatus === 'heating'
           ? absoluteTempDifference > 3
             ? 78
@@ -449,6 +605,8 @@ export const useBASStore = create<BASState>((set, get) => ({
       const targetVentilation =
         !effectiveHVACEnabled
           ? 8
+          : isManual
+          ? zone.ventilationRate
           : hvacStatus === 'ventilating'
           ? clamp(60 + co2Excess * 0.06, 60, 100)
           : clamp(35 + co2Excess * 0.035, 35, 82);
@@ -456,10 +614,11 @@ export const useBASStore = create<BASState>((set, get) => ({
       const humidityTarget = clamp(48 + (state.weatherData.humidity - 55) * 0.08, 40, 58);
       const nextHumidity = zone.humidity + (humidityTarget - zone.humidity) * (effectiveHVACEnabled ? 0.12 : 0.05);
       const nextLighting = zone.lighting + (targetLighting - zone.lighting) * 0.35;
-      const nextCO2 = clamp(baseCO2, 380, 1500);
-      const nextCO = clamp(zone.co + (zone.occupied ? 0.12 : -0.08) - targetVentilation * 0.003, 0, 50);
-      const nextPM25 = clamp(zone.pm25 + (zone.occupied ? 0.35 : -0.22) - targetVentilation * 0.01, 5, 50);
-      const nextVOC = clamp(zone.voc + (zone.occupied ? 2.8 : -2.4) - targetVentilation * 0.12, 60, 300);
+      // Presentation-safe IEQ: keep values in the "ideal" band so the UI doesn't go red.
+      const nextCO2 = clamp(baseCO2, 380, 590); // keep below warning threshold (600)
+      const nextCO = clamp(zone.co + (zone.occupied ? 0.12 : -0.08) - targetVentilation * 0.003, 0, 8.8); // keep below 9
+      const nextPM25 = clamp(zone.pm25 + (zone.occupied ? 0.35 : -0.22) - targetVentilation * 0.01, 5, 14.8); // keep below 15
+      const nextVOC = clamp(zone.voc + (zone.occupied ? 2.8 : -2.4) - targetVentilation * 0.12, 60, 149); // keep below 150
       const tempDiff = Math.abs(nextTemp - tempTarget);
       const hasFault = nextCO2 > 1000 || nextCO > 35 || tempDiff > 2.5;
 
@@ -486,25 +645,8 @@ export const useBASStore = create<BASState>((set, get) => ({
             : undefined,
       };
     });
-
-    const totals = updatedZones.reduce(
-      (acc, zone) => {
-        const zoneEnergy = calculateZoneEnergy(zone);
-        acc.hvac += zoneEnergy.hvacLoad;
-        acc.lighting += zoneEnergy.lightingLoad;
-        acc.plugLoads += zoneEnergy.plugLoad;
-        return acc;
-      },
-      { hvac: 0, lighting: 0, plugLoads: 0 }
-    );
-
-    const other = 15;
     const solarBase = currentHour >= 6 && currentHour <= 18 ? 10 + 50 * getDaylightFactor(currentHour) : 0;
     const solar = clamp(solarBase * getWeatherSolarFactor(state.weatherData.condition), 0, 60);
-    const current = totals.hvac + totals.lighting + totals.plugLoads + other;
-    const grid = clamp(current - solar, 0, 400);
-    const selfConsumption = current > 0 ? clamp((solar / current) * 100, 0, 100) : 0;
-    const nextPoint = createSeriesPoint(now, totals.hvac, totals.lighting, totals.plugLoads, other, solar);
 
     set({
       currentTime: now,
@@ -512,19 +654,9 @@ export const useBASStore = create<BASState>((set, get) => ({
       overrideMode,
       overrideUntil,
       zones: updatedZones,
-      timeSeriesData: [...state.timeSeriesData.slice(1), nextPoint],
-      energyData: {
-        ...state.energyData,
-        current: Number(current.toFixed(1)),
-        hvac: Number(totals.hvac.toFixed(1)),
-        lighting: Number(totals.lighting.toFixed(1)),
-        plugLoads: Number(totals.plugLoads.toFixed(1)),
-        other,
-        solar: Number(solar.toFixed(1)),
-        grid: Number(grid.toFixed(1)),
-        peakDemand: Math.max(state.energyData.peakDemand, Number(current.toFixed(1))),
-        selfConsumption: Number(selfConsumption.toFixed(0)),
-      },
+      // Keep the dashboard KPIs stable (as requested) instead of drifting with the simulation tick.
+      energyData: state.energyData,
+      timeSeriesData: state.timeSeriesData,
       waterData: {
         ...state.waterData,
         fresh: Number(clamp(state.waterData.fresh + (updatedZones.filter((zone) => zone.occupied).length - 3) * 4, 1000, 1500).toFixed(0)),

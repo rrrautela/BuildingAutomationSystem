@@ -1,7 +1,7 @@
 import { useBASStore } from '../store/basStore';
 import { Card, SectionHeader, MetricCard } from '../components/ui/Card';
 import { GaugeChart } from '../components/ui/Charts';
-import { ProgressBar, Badge } from '../components/ui/Controls';
+import { Badge } from '../components/ui/Controls';
 import { motion } from 'framer-motion';
 import {
   Droplets,
@@ -207,7 +207,11 @@ export const WaterModule = () => {
                   </p>
                 </div>
               </div>
-              <button className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors">
+              <button
+                className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
+                type="button"
+                onClick={() => window.alert('Leak investigation started. Check valves/meters for abnormal flow.')}
+              >
                 Investigate Now
               </button>
             </motion.div>
@@ -261,7 +265,7 @@ export const WaterModule = () => {
             return (
               <motion.div
                 key={i}
-                className="flex-1 bg-blue-500 rounded-t hover:bg-blue-400 transition-colors"
+                className="relative flex-1 bg-blue-500 rounded-t hover:bg-blue-400 transition-colors"
                 initial={{ height: 0 }}
                 animate={{ height: `${(usage / 250) * 100}%` }}
                 transition={{ delay: i * 0.02, duration: 0.3 }}
