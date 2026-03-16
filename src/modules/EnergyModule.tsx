@@ -3,12 +3,14 @@ import { Card, SectionHeader, MetricCard } from '../components/ui/Card';
 import { EnergyTimeSeriesChart, EnergyBreakdownChart } from '../components/ui/Charts';
 import { ProgressBar } from '../components/ui/Controls';
 import { motion } from 'framer-motion';
-import { Zap, Target, Activity } from 'lucide-react';
+import { Zap, Target, Activity, Gauge } from 'lucide-react';
 
 export const EnergyModule = () => {
   const { energyData, timeSeriesData, isPeakHours, zones } = useBASStore();
 
-  const savingsKWh = Math.max(0, energyData.baseline - energyData.current);
+  const savingsKW = Math.max(0, energyData.baseline - energyData.current);
+  const savingsPercent =
+    energyData.baseline > 0 ? Math.round((savingsKW / energyData.baseline) * 100) : 0;
 
   const breakdownData = [
     { name: 'HVAC', value: energyData.hvac, color: '#06b6d4' },
@@ -19,7 +21,7 @@ export const EnergyModule = () => {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
           title="Current Demand"
           value={energyData.current}
@@ -37,16 +39,23 @@ export const EnergyModule = () => {
         />
         <MetricCard
           title="Energy Savings"
-          value={savingsKWh}
-          unit="kW"
+          value={savingsPercent}
+          unit="%"
           icon={<Target className="w-5 h-5" />}
           status="normal"
-          subtitle="vs baseline"
+          subtitle={`${savingsKW.toFixed(0)} kW vs baseline`}
+        />
+        <MetricCard
+          title="EPI Score"
+          value={energyData.epi}
+          icon={<Gauge className="w-5 h-5" />}
+          status="normal"
+          subtitle="Energy Performance Index"
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
-        <Card className="lg:col-span-2 h-[25rem] flex flex-col p-0 overflow-hidden">
+        <Card className="lg:col-span-2 h-[20rem] sm:h-[25rem] flex flex-col p-0 overflow-hidden">
           <div className="p-4 pb-0">
           <SectionHeader
             title="Energy Consumption Profile"
@@ -54,21 +63,21 @@ export const EnergyModule = () => {
           />
           </div>
           <div className="flex-1 min-h-0 p-4">
-            <EnergyTimeSeriesChart data={timeSeriesData} />
+            <EnergyTimeSeriesChart data={timeSeriesData} showSolar={false} />
           </div>
         </Card>
 
-        <Card className="h-[25rem] flex flex-col p-0 overflow-hidden">
+        <Card className="h-[20rem] sm:h-[25rem] flex flex-col p-0 overflow-hidden">
           <div className="p-4 pb-0">
             <SectionHeader title="End-Use Breakdown" subtitle="Current consumption by category" />
           </div>
           <div className="flex justify-center flex-1 min-h-0 p-4">
             <EnergyBreakdownChart data={breakdownData} />
           </div>
-          <div className="px-4 pb-4 space-y-3">
+          <div className="px-3 sm:px-4 pb-3 sm:pb-4 space-y-2 sm:space-y-3">
             {breakdownData.map((item) => (
               <div key={item.name} className="space-y-1">
-                <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center justify-between text-xs sm:text-sm">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
                     <span className="text-gray-400">{item.name}</span>
@@ -79,7 +88,7 @@ export const EnergyModule = () => {
                   value={item.value}
                   max={energyData.current}
                   showValue={false}
-                  color={`bg-[${item.color}]`}
+                  color={item.color}
                   size="sm"
                 />
               </div>
@@ -88,11 +97,14 @@ export const EnergyModule = () => {
         </Card>
       </div>
 
-      <Card>
+        <Card>
         <SectionHeader title="Zone Energy Contribution" subtitle="Energy consumption by zone" />
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
           {zones.map((zone) => {
-            const zoneEnergy = zone.occupied ? 20 + (zone.lighting / 100) * 15 + (zone.hvacStatus !== 'idle' ? 25 : 5) : 5;
+            // Presentation: keep each zone in a realistic 40-50 kW band with a small variation per zone.
+            const zoneEnergy = 40 + (zone.occupantCount % 11); // 40..50
+            const hvacKW = zoneEnergy * 0.55;
+            const lightingKW = zoneEnergy * 0.25;
             return (
               <motion.div
                 key={zone.id}
@@ -106,11 +118,11 @@ export const EnergyModule = () => {
                 <div className="mt-2 space-y-1 text-xs">
                   <div className="flex justify-between">
                     <span className="text-gray-400">HVAC</span>
-                    <span className="text-gray-300">{zone.hvacStatus !== 'idle' ? '25 kW' : '5 kW'}</span>
+                    <span className="text-gray-300">{hvacKW.toFixed(0)} kW</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400">Lighting</span>
-                    <span className="text-gray-300">{((zone.lighting / 100) * 15).toFixed(0)} kW</span>
+                    <span className="text-gray-300">{lightingKW.toFixed(0)} kW</span>
                   </div>
                 </div>
               </motion.div>

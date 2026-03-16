@@ -19,6 +19,7 @@ export const SchedulingModule = () => {
   const {
     schedules,
     toggleSchedule,
+    addSchedule,
     isPeakHours,
     zones,
     isHolidayMode,
@@ -115,7 +116,7 @@ export const SchedulingModule = () => {
           <SectionHeader
             title="Schedule Management"
             action={
-              <Button variant="secondary" icon={<Plus className="w-4 h-4" />}>
+              <Button variant="secondary" icon={<Plus className="w-4 h-4" />} onClick={addSchedule}>
                 Add Schedule
               </Button>
             }
@@ -151,7 +152,7 @@ export const SchedulingModule = () => {
                         {isHolidayMode || schedule.mode === 'night-setback' ? (
                           <span className="text-gray-400">HVAC is off</span>
                         ) : (
-                          <span>Target: 26-30C</span>
+                          <span>Target: 26-30{'\u00B0C'}</span>
                         )}
                         <span className="capitalize">Mode: {isHolidayMode ? 'holiday' : schedule.mode}</span>
                       </div>

@@ -77,16 +77,14 @@ export const MetricCard = ({
           {subtitle && <p className="text-xs text-gray-500 mt-1">{subtitle}</p>}
           {trend && trendValue && (
             <div className={`flex items-center gap-1 mt-2 text-xs ${trendColors[trend]}`}>
-              {trend === 'up' && '↑'}
-              {trend === 'down' && '↓'}
-              {trend === 'neutral' && '→'}
+              {trend === 'up' && '\u2191'}
+              {trend === 'down' && '\u2193'}
+              {trend === 'neutral' && '\u2192'}
               <span>{trendValue}</span>
             </div>
           )}
         </div>
-        <div className={`p-2 rounded-lg bg-gray-800/50 ${statusColors[status]}`}>
-          {icon}
-        </div>
+        <div className={`p-2 rounded-lg bg-gray-800/50 ${statusColors[status]}`}>{icon}</div>
       </div>
       {status === 'critical' && (
         <div className="absolute inset-0 bg-red-500/5 animate-pulse pointer-events-none" />
@@ -110,3 +108,4 @@ export const SectionHeader = ({ title, subtitle, action }: SectionHeaderProps) =
     {action}
   </div>
 );
+

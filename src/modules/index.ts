@@ -5,4 +5,3 @@ export { EnergyModule } from './EnergyModule';
 export { IEQModule } from './IEQModule';
 export { SchedulingModule } from './SchedulingModule';
 export { FaultsModule } from './FaultsModule';
-export { SolarModule } from './SolarModule';

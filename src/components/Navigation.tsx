@@ -8,7 +8,6 @@ import {
   Wind,
   Calendar,
   AlertTriangle,
-  Sun,
 } from 'lucide-react';
 
 const tabs = [
@@ -19,7 +18,6 @@ const tabs = [
   { id: 'ieq', label: 'IEQ', icon: Wind },
   { id: 'scheduling', label: 'Scheduling', icon: Calendar },
   { id: 'faults', label: 'Faults', icon: AlertTriangle },
-  { id: 'solar', label: 'Solar', icon: Sun },
 ];
 
 export const Navigation = () => {
@@ -28,7 +26,7 @@ export const Navigation = () => {
 
   return (
     <nav className="border-b border-gray-800 bg-gray-900/30">
-      <div className="px-6 flex gap-1 overflow-x-auto scrollbar-thin">
+      <div className="px-3 sm:px-6 flex gap-1 overflow-x-auto scrollbar-thin">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const showBadge = tab.id === 'faults' && unacknowledgedFaults > 0;

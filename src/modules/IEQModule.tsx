@@ -78,7 +78,7 @@ export const IEQModule = () => {
         <MetricCard
           title="Avg. Temperature"
           value={avgTemp}
-          unit="C"
+          unit={'\u00B0C'}
           icon={<Thermometer className="w-5 h-5" />}
           status={avgTemp > 25 || avgTemp < 20 ? 'warning' : 'normal'}
         />
@@ -150,7 +150,7 @@ export const IEQModule = () => {
           </div>
 
           <div className="space-y-4">
-            <ComfortBand value={selectedZone.temp} min={15} max={30} optimalMin={21} optimalMax={24} label="Temperature" unit="C" />
+            <ComfortBand value={selectedZone.temp} min={15} max={30} optimalMin={21} optimalMax={24} label="Temperature" unit={'\u00B0C'} />
             <ComfortBand value={selectedZone.humidity} min={20} max={80} optimalMin={40} optimalMax={60} label="Humidity" unit="%" />
             <ComfortBand value={selectedZone.co2} min={300} max={1000} optimalMin={400} optimalMax={600} label="CO2" unit="ppm" />
             <ComfortBand value={selectedZone.co} min={0} max={50} optimalMin={0} optimalMax={9} label="Carbon Monoxide (CO)" unit="ppm" />
@@ -209,7 +209,7 @@ export const IEQModule = () => {
                 { label: 'CO2', optimal: '< 600 ppm', warning: '600-700 ppm', critical: '> 700 ppm' },
                 { label: 'CO', optimal: '0-9 ppm', warning: '10-35 ppm', critical: '> 35 ppm' },
                 { label: 'PM2.5', optimal: '< 15 ug/m3', warning: '15-25 ug/m3', critical: '> 25 ug/m3' },
-                { label: 'Temperature', optimal: '21-24C', warning: '+/-2C', critical: '+/-3C' },
+                { label: 'Temperature', optimal: `21-24${'\u00B0C'}`, warning: `+/-2${'\u00B0C'}`, critical: `+/-3${'\u00B0C'}` },
                 { label: 'Humidity', optimal: '40-60%', warning: '+/-10%', critical: '+/-20%' },
               ].map((standard) => (
                 <div key={standard.label} className="p-3 bg-gray-800/50 rounded-lg">

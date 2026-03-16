@@ -1,5 +1,4 @@
 import {
-  LineChart,
   Line,
   AreaChart,
   Area,
@@ -29,7 +28,7 @@ const COLORS = {
 
 interface CustomTooltipProps {
   active?: boolean;
-  payload?: { name: string; value: number; color: string }[];
+  payload?: any[];
   label?: string;
 }
 
@@ -39,8 +38,17 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
     <div className="bg-gray-900 border border-gray-700 rounded-lg p-3 shadow-xl">
       <p className="text-gray-400 text-sm mb-2">{label}</p>
       {payload.map((entry, index) => (
-        <p key={index} className="text-sm" style={{ color: entry.color }}>
-          {entry.name}: {entry.value.toFixed(1)}
+        <p
+          key={index}
+          className="text-sm"
+          style={{ color: entry?.color ?? entry?.payload?.color ?? '#e5e7eb' }}
+        >
+          {entry?.name ?? entry?.dataKey ?? 'Value'}:{' '}
+          {typeof entry?.value === 'number'
+            ? entry.value.toFixed(1)
+            : Number.isFinite(Number(entry?.value))
+              ? Number(entry.value).toFixed(1)
+              : String(entry?.value ?? '')}
         </p>
       ))}
     </div>
@@ -49,9 +57,10 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
 
 interface EnergyTimeSeriesChartProps {
   data: { time: string; consumption: number; solar: number; prediction: number }[];
+  showSolar?: boolean;
 }
 
-export const EnergyTimeSeriesChart = ({ data }: EnergyTimeSeriesChartProps) => (
+export const EnergyTimeSeriesChart = ({ data, showSolar = false }: EnergyTimeSeriesChartProps) => (
   <ResponsiveContainer width="100%" height="100%">
     <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
       <defs>
@@ -59,10 +68,12 @@ export const EnergyTimeSeriesChart = ({ data }: EnergyTimeSeriesChartProps) => (
           <stop offset="5%" stopColor={COLORS.cyan} stopOpacity={0.3} />
           <stop offset="95%" stopColor={COLORS.cyan} stopOpacity={0} />
         </linearGradient>
-        <linearGradient id="colorSolar" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="5%" stopColor={COLORS.yellow} stopOpacity={0.3} />
-          <stop offset="95%" stopColor={COLORS.yellow} stopOpacity={0} />
-        </linearGradient>
+        {showSolar && (
+          <linearGradient id="colorSolar" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor={COLORS.yellow} stopOpacity={0.3} />
+            <stop offset="95%" stopColor={COLORS.yellow} stopOpacity={0} />
+          </linearGradient>
+        )}
       </defs>
       <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
       <XAxis dataKey="time" stroke="#6b7280" tick={{ fontSize: 11 }} />
@@ -77,14 +88,16 @@ export const EnergyTimeSeriesChart = ({ data }: EnergyTimeSeriesChartProps) => (
         fill="url(#colorConsumption)"
         strokeWidth={2}
       />
-      <Area
-        type="monotone"
-        dataKey="solar"
-        name="Solar"
-        stroke={COLORS.yellow}
-        fill="url(#colorSolar)"
-        strokeWidth={2}
-      />
+      {showSolar && (
+        <Area
+          type="monotone"
+          dataKey="solar"
+          name="Solar"
+          stroke={COLORS.yellow}
+          fill="url(#colorSolar)"
+          strokeWidth={2}
+        />
+      )}
       <Line
         type="monotone"
         dataKey="prediction"
@@ -108,10 +121,10 @@ export const EnergyBreakdownChart = ({ data }: EnergyBreakdownChartProps) => (
       <Pie
         data={data}
         cx="50%"
-        cy="50%"
-        innerRadius={50}
-        outerRadius={80}
-        paddingAngle={2}
+        cy="45%"
+        innerRadius="60%"
+        outerRadius="90%"
+        paddingAngle={1}
         dataKey="value"
       >
         {data.map((entry, index) => (
@@ -151,7 +164,7 @@ interface GaugeChartProps {
 }
 
 export const GaugeChart = ({ value, max, label, color = COLORS.cyan, thresholds }: GaugeChartProps) => {
-  const percentage = (value / max) * 100;
+  const percentage = max > 0 ? Math.max(0, Math.min(100, (value / max) * 100)) : 0;
   let displayColor = color;
   
   if (thresholds) {
@@ -161,7 +174,9 @@ export const GaugeChart = ({ value, max, label, color = COLORS.cyan, thresholds 
   }
   
   const circumference = 2 * Math.PI * 45;
-  const strokeDashoffset = circumference - (percentage / 100) * circumference * 0.75;
+  const arcLength = circumference * 0.75; // 270deg gauge sweep
+  const filledLength = arcLength * (percentage / 100);
+  const showFill = filledLength > 0.001;
 
   return (
     <div className="relative w-32 h-32">
@@ -173,20 +188,21 @@ export const GaugeChart = ({ value, max, label, color = COLORS.cyan, thresholds 
           fill="none"
           stroke="#374151"
           strokeWidth="8"
-          strokeDasharray={`${circumference * 0.75} ${circumference * 0.25}`}
+          strokeDasharray={`${arcLength} ${circumference}`}
         />
-        <circle
-          cx="50"
-          cy="50"
-          r="45"
-          fill="none"
-          stroke={displayColor}
-          strokeWidth="8"
-          strokeLinecap="round"
-          strokeDasharray={`${circumference * 0.75} ${circumference * 0.25}`}
-          strokeDashoffset={strokeDashoffset}
-          className="transition-all duration-500"
-        />
+        {showFill && (
+          <circle
+            cx="50"
+            cy="50"
+            r="45"
+            fill="none"
+            stroke={displayColor}
+            strokeWidth="8"
+            strokeLinecap="round"
+            strokeDasharray={`${filledLength} ${circumference}`}
+            className="transition-all duration-500"
+          />
+        )}
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="text-xl font-bold text-white">{value.toFixed(0)}</span>

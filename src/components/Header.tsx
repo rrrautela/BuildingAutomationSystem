@@ -14,26 +14,26 @@ export const Header = () => {
 
   return (
     <header className="border-b border-gray-800 bg-gray-900/50 backdrop-blur-sm sticky top-0 z-50">
-      <div className="px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      <div className="px-3 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-6">
+        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
           <motion.div
-            className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center"
+            className="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
             <Activity className="w-6 h-6 text-white" />
           </motion.div>
-          <div>
-            <h1 className="text-xl font-bold text-white">Building Automation System</h1>
-            <p className="text-sm text-gray-400">Intelligent Energy & Comfort Management</p>
+          <div className="min-w-0">
+            <h1 className="text-base sm:text-xl font-bold text-white truncate">Building Automation System</h1>
+            <p className="hidden sm:block text-sm text-gray-400">Intelligent Energy & Comfort Management</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-6">
-          <div className="hidden md:flex items-center gap-3 px-4 py-2 bg-gray-800/50 rounded-lg">
+        <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-6">
+          <div className="hidden sm:flex items-center gap-3 px-3 sm:px-4 py-2 bg-gray-800/50 rounded-lg">
             <WeatherIcon className="w-5 h-5 text-yellow-400" />
             <div className="text-sm">
-              <span className="text-white font-medium">{weatherData.temp}C</span>
+              <span className="text-white font-medium">{weatherData.temp}{'\u00B0C'}</span>
               <span className="text-gray-400 ml-2">{weatherData.humidity}% RH</span>
             </div>
           </div>
@@ -42,7 +42,7 @@ export const Header = () => {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => setShow3D(!show3D)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+            className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base font-medium transition-colors ${
               show3D ? 'bg-cyan-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
             }`}
           >
@@ -60,8 +60,8 @@ export const Header = () => {
             {show3D ? '3D View' : '2D View'}
           </motion.button>
 
-          <div className="text-right pl-4 border-l border-gray-800">
-            <div className="text-sm font-medium text-white">
+          <div className="text-right pl-3 sm:pl-4 border-l border-gray-800 flex-shrink-0">
+            <div className="text-sm font-medium text-white tabular-nums">
               {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </div>
             <div className="text-xs text-gray-400">

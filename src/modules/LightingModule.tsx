@@ -1,4 +1,4 @@
-import { useBASStore } from '../store/basStore';
+﻿import { useBASStore } from '../store/basStore';
 import { Card, SectionHeader, MetricCard } from '../components/ui/Card';
 import { Slider, Toggle, Badge } from '../components/ui/Controls';
 import { motion } from 'framer-motion';
@@ -70,7 +70,7 @@ export const LightingModule = () => {
         <MetricCard
           title="Lighting Efficiency"
           value={4}
-          unit="W/m²"
+          unit={'W/m\u00B2'}
           icon={<Zap className="w-5 h-5" />}
           status="normal"
         />
@@ -258,7 +258,7 @@ export const LightingModule = () => {
         <SectionHeader title="Lighting Schedules" subtitle="Automated lighting control schedules" />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {lightingSchedules.map((schedule) => (
-            <div key={schedule.name} className="p-4 bg-gray-800/50 rounded-lg flex items-center justify-between">
+            <div key={schedule.id} className="p-4 bg-gray-800/50 rounded-lg flex items-center justify-between">
               <div>
                 <p className="text-white font-medium">{schedule.name}</p>
                 <p className="text-sm text-gray-400">
@@ -274,3 +274,4 @@ export const LightingModule = () => {
     </div>
   );
 };
+
