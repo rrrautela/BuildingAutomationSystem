@@ -17,9 +17,11 @@ export const BuildingView = () => {
       { color: '#3b82f6', label: 'Too Cold (<1.5°C below)' },
     ],
     lighting: [
-      { color: '#fcd34d', label: 'Bright (>70%)', glow: true },
-      { color: '#ca8a04', label: 'Medium (40-70%)' },
-      { color: '#713f12', label: 'Dim (<40%)' },
+      { color: '#fff7d6', label: 'Bright (100%)', glow: true },
+      { color: '#f5a623', label: 'Warm (75%)' },
+      { color: '#f5f0e8', label: 'Neutral (50%)' },
+      { color: '#4a90d9', label: 'Soft Blue (25%)' },
+      { color: '#1e3a5f', label: 'Deep Blue (0%)' },
     ],
     occupancy: [
       { color: '#22c55e', label: 'Occupied' },
@@ -39,7 +41,15 @@ export const BuildingView = () => {
       transition={{ duration: 0.3 }}
       className="border-b border-gray-800"
     >
-      <div className="relative" style={{ height: '55vh' }}>
+      <div
+        style={{
+          width: '100%',
+          height: '420px',
+          position: 'relative',
+          overflow: 'hidden',
+          background: 'transparent',
+        }}
+      >
         <Scene />
 
         <div className="absolute top-4 left-4 flex gap-2 z-10">

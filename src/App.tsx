@@ -3,7 +3,6 @@ import { useBASStore } from './store/basStore';
 import { useSimulation, useRealTimeClock } from './hooks/useSimulation';
 import { Header } from './components/Header';
 import { Navigation } from './components/Navigation';
-import { AlertsPanel } from './components/AlertsPanel';
 import { BuildingView } from './three/BuildingView';
 import {
   OverviewModule,
@@ -11,11 +10,9 @@ import {
   LightingModule,
   EnergyModule,
   IEQModule,
-  WaterModule,
   SchedulingModule,
   FaultsModule,
   SolarModule,
-  AnalyticsModule,
 } from './modules';
 
 const ModuleRenderer = () => {
@@ -27,11 +24,9 @@ const ModuleRenderer = () => {
     lighting: <LightingModule />,
     energy: <EnergyModule />,
     ieq: <IEQModule />,
-    water: <WaterModule />,
     scheduling: <SchedulingModule />,
     faults: <FaultsModule />,
     solar: <SolarModule />,
-    analytics: <AnalyticsModule />,
   };
 
   return modules[activeTab] || <OverviewModule />;
@@ -40,13 +35,13 @@ const ModuleRenderer = () => {
 function App() {
   useSimulation(3000);
   useRealTimeClock();
-  
+
   const show3D = useBASStore((state) => state.show3D);
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100">
       <Header />
-      
+
       <AnimatePresence mode="wait">
         {show3D && <BuildingView key="building-view" />}
       </AnimatePresence>
@@ -54,12 +49,11 @@ function App() {
       <Navigation />
 
       <main className="p-6">
-        <AlertsPanel />
         <ModuleRenderer />
       </main>
 
       <footer className="border-t border-gray-800 px-6 py-4 text-center text-xs text-gray-500">
-        <p>Building Automation System • Digital Twin Dashboard • Real-time Monitoring & Control</p>
+        <p>Building Automation System | Digital Twin Dashboard | Real-time Monitoring & Control</p>
       </footer>
     </div>
   );

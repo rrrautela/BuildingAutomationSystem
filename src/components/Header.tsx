@@ -1,10 +1,9 @@
 import { useBASStore } from '../store/basStore';
-import { Activity, Bell, Layers, Box, Sun, Cloud, CloudRain } from 'lucide-react';
+import { Activity, Layers, Box, Sun, Cloud, CloudRain } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const Header = () => {
-  const { show3D, setShow3D, alerts, weatherData, currentTime } = useBASStore();
-  const activeAlerts = alerts.filter((a) => !a.dismissed);
+  const { show3D, setShow3D, weatherData, currentTime } = useBASStore();
 
   const WeatherIcon = {
     sunny: Sun,
@@ -34,7 +33,7 @@ export const Header = () => {
           <div className="hidden md:flex items-center gap-3 px-4 py-2 bg-gray-800/50 rounded-lg">
             <WeatherIcon className="w-5 h-5 text-yellow-400" />
             <div className="text-sm">
-              <span className="text-white font-medium">{weatherData.temp}°C</span>
+              <span className="text-white font-medium">{weatherData.temp}C</span>
               <span className="text-gray-400 ml-2">{weatherData.humidity}% RH</span>
             </div>
           </div>
@@ -44,9 +43,7 @@ export const Header = () => {
             whileTap={{ scale: 0.98 }}
             onClick={() => setShow3D(!show3D)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
-              show3D
-                ? 'bg-cyan-600 text-white'
-                : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+              show3D ? 'bg-cyan-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
             }`}
           >
             <AnimatePresence mode="wait">
@@ -62,28 +59,6 @@ export const Header = () => {
             </AnimatePresence>
             {show3D ? '3D View' : '2D View'}
           </motion.button>
-
-          <div className="relative">
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              className="p-2 text-gray-400 hover:text-white transition-colors"
-            >
-              <Bell className="w-5 h-5" />
-            </motion.button>
-            <AnimatePresence>
-              {activeAlerts.length > 0 && (
-                <motion.span
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  exit={{ scale: 0 }}
-                  className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-xs flex items-center justify-center font-medium"
-                >
-                  {activeAlerts.length}
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </div>
 
           <div className="text-right pl-4 border-l border-gray-800">
             <div className="text-sm font-medium text-white">

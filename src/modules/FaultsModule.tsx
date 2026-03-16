@@ -7,7 +7,6 @@ import {
   AlertCircle,
   CheckCircle,
   Clock,
-  DollarSign,
   Wrench,
   Eye,
   XCircle,
@@ -18,7 +17,6 @@ export const FaultsModule = () => {
 
   const activeFaults = faults.filter((f) => !f.resolved);
   const unacknowledged = faults.filter((f) => !f.acknowledged && !f.resolved);
-  const totalPotentialSavings = activeFaults.reduce((sum, f) => sum + (f.estimatedSavings || 0), 0);
 
   const severityConfig = {
     critical: {
@@ -53,7 +51,7 @@ export const FaultsModule = () => {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <MetricCard
           title="Active Faults"
           value={activeFaults.length}
@@ -67,13 +65,6 @@ export const FaultsModule = () => {
           status={unacknowledged.length > 0 ? 'critical' : 'normal'}
         />
         <MetricCard
-          title="Potential Savings"
-          value={totalPotentialSavings}
-          unit="kWh/day"
-          icon={<DollarSign className="w-5 h-5" />}
-          subtitle="If faults resolved"
-        />
-        <MetricCard
           title="Resolved Today"
           value={faults.filter((f) => f.resolved).length}
           icon={<CheckCircle className="w-5 h-5" />}
@@ -83,10 +74,7 @@ export const FaultsModule = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2">
-          <SectionHeader
-            title="Fault List"
-            subtitle="Active faults requiring attention"
-          />
+          <SectionHeader title="Fault List" subtitle="Active faults requiring attention" />
           <div className="space-y-4">
             <AnimatePresence>
               {activeFaults.length === 0 ? (
@@ -97,9 +85,7 @@ export const FaultsModule = () => {
                 >
                   <CheckCircle className="w-16 h-16 text-green-400 mb-4" />
                   <h3 className="text-white font-semibold text-lg">No Active Faults</h3>
-                  <p className="text-gray-400 text-sm mt-2">
-                    All systems operating within normal parameters
-                  </p>
+                  <p className="text-gray-400 text-sm mt-2">All systems operating within normal parameters</p>
                 </motion.div>
               ) : (
                 activeFaults.map((fault) => {
@@ -116,16 +102,14 @@ export const FaultsModule = () => {
                       className={`p-4 rounded-lg border ${config.bg} ${config.border}`}
                     >
                       <div className="flex items-start gap-4">
-                        <div className={`p-2 rounded-lg bg-gray-900/50`}>
+                        <div className="p-2 rounded-lg bg-gray-900/50">
                           <Icon className={`w-5 h-5 ${config.iconColor}`} />
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
                             <h3 className="text-white font-medium">{fault.type}</h3>
                             <Badge variant={config.badge}>{fault.severity}</Badge>
-                            {!fault.acknowledged && (
-                              <Badge variant="danger">New</Badge>
-                            )}
+                            {!fault.acknowledged && <Badge variant="danger">New</Badge>}
                           </div>
                           <p className="text-gray-400 text-sm">{fault.description}</p>
                           <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
@@ -137,29 +121,15 @@ export const FaultsModule = () => {
                               <Clock className="w-3 h-3" />
                               {fault.detectedAt}
                             </span>
-                            {fault.estimatedSavings && (
-                              <span className="flex items-center gap-1 text-green-400">
-                                <DollarSign className="w-3 h-3" />
-                                {fault.estimatedSavings} kWh/day savings
-                              </span>
-                            )}
                           </div>
                         </div>
                         <div className="flex gap-2">
                           {!fault.acknowledged && (
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              onClick={() => acknowledgeFault(fault.id)}
-                            >
+                            <Button variant="secondary" size="sm" onClick={() => acknowledgeFault(fault.id)}>
                               Acknowledge
                             </Button>
                           )}
-                          <Button
-                            variant="primary"
-                            size="sm"
-                            onClick={() => resolveFault(fault.id)}
-                          >
+                          <Button variant="primary" size="sm" onClick={() => resolveFault(fault.id)}>
                             Resolve
                           </Button>
                         </div>
@@ -179,9 +149,7 @@ export const FaultsModule = () => {
               <h4 className="text-sm text-gray-400 mb-3">By Severity</h4>
               <div className="space-y-2">
                 {['critical', 'high', 'medium', 'low'].map((severity) => {
-                  const count = faults.filter(
-                    (f) => f.severity === severity && !f.resolved
-                  ).length;
+                  const count = faults.filter((f) => f.severity === severity && !f.resolved).length;
                   const config = severityConfig[severity as keyof typeof severityConfig];
                   return (
                     <div key={severity} className="flex items-center justify-between">
@@ -235,10 +203,7 @@ export const FaultsModule = () => {
       </div>
 
       <Card>
-        <SectionHeader
-          title="Fault History"
-          subtitle="Recently resolved faults"
-        />
+        <SectionHeader title="Fault History" subtitle="Recently resolved faults" />
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>

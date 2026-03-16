@@ -1,5 +1,5 @@
 export type HVACMode = 'auto' | 'manual' | 'night-setback';
-export type HVACStatus = 'cooling' | 'heating' | 'idle' | 'ventilating';
+export type HVACStatus = 'cooling' | 'heating' | 'idle' | 'ventilating' | 'off';
 export type AlertType = 'critical' | 'warning' | 'info';
 export type ViewMode = 'hvac' | 'lighting' | 'occupancy' | 'energy';
 export type ScheduleMode = 'scheduled' | 'override' | 'holiday';
@@ -15,10 +15,15 @@ export interface Zone {
   occupied: boolean;
   occupantCount: number;
   co2: number;
+  co: number;
   pm25: number;
   voc: number;
   lighting: number;
+  configuredLighting: number;
+  lightingEnabled: boolean;
+  autoDimmingEnabled: boolean;
   daylightContribution: number;
+  hvacEnabled: boolean;
   hvacStatus: HVACStatus;
   fanSpeed: number;
   ventilationRate: number;
@@ -81,6 +86,15 @@ export interface Schedule {
   active: boolean;
 }
 
+export interface LightingSchedule {
+  id: string;
+  name: string;
+  startTime: string;
+  endTime: string;
+  level: number;
+  active: boolean;
+}
+
 export interface TimeSeriesPoint {
   time: string;
   hour: number;
@@ -122,6 +136,7 @@ export interface BASState {
   waterData: WaterData;
   weatherData: WeatherData;
   schedules: Schedule[];
+  lightingSchedules: LightingSchedule[];
   optimizations: OptimizationSuggestion[];
   timeSeriesData: TimeSeriesPoint[];
   selectedZoneId: string | null;
@@ -129,6 +144,10 @@ export interface BASState {
   show3D: boolean;
   activeTab: string;
   isPeakHours: boolean;
+  isHolidayMode: boolean;
+  afterHoursDuration: string;
+  overrideMode: 'occupied' | 'night-setback' | null;
+  overrideUntil: number | null;
   currentTime: Date;
   
   // Actions
@@ -136,12 +155,20 @@ export interface BASState {
   setViewMode: (mode: ViewMode) => void;
   setShow3D: (show: boolean) => void;
   setActiveTab: (tab: string) => void;
+  toggleHolidayMode: () => void;
+  toggleZoneHVAC: (zoneId: string) => void;
+  toggleZoneLighting: (zoneId: string) => void;
+  toggleZoneAutoDimming: (zoneId: string) => void;
   updateZone: (zoneId: string, updates: Partial<Zone>) => void;
   dismissAlert: (alertId: string) => void;
   acknowledgeFault: (faultId: string) => void;
   resolveFault: (faultId: string) => void;
   addAlert: (alert: Omit<Alert, 'id' | 'timestamp'>) => void;
   toggleSchedule: (scheduleId: string) => void;
+  toggleLightingSchedule: (scheduleId: string) => void;
+  setAfterHoursDuration: (duration: string) => void;
+  requestAfterHoursOverride: () => void;
+  activateNightSetback: () => void;
   implementOptimization: (optimizationId: string) => void;
   tick: () => void;
 }
